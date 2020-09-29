@@ -1,22 +1,22 @@
-=begin
-Create a class called MyCar.
-When you initialize a new instance or object of the class, allow the user to
-define some instance variables that tell us the year, color, and model of
-the car.
-Create an instance variable that is set to 0 during instantiation of the object
-to track the current speed of the car as well.
-Create instance methods that allow the car to speed up, brake, and shut the car off.
-=end
+# Add a class method to your MyCar class that calculates the gas mileage of any car.
 
 class MyCar
   attr_accessor :color
-  attr_reader :year
+  attr_reader :year, :model
+
+  def self.mileage(miles, gallons)
+    (miles / gallons.to_f).round(2)
+  end
 
   def initialize(year, color, model)
     @year = year
     @color = color
     @model = model
     @speed = 0
+  end
+
+  def to_s
+    "A very respectable #{color} #{year} #{model.capitalize}."
   end
 
   def turn_off
@@ -41,9 +41,22 @@ class MyCar
   end
 end
 
+puts MyCar.mileage(10_000, 435)
+
 car = MyCar.new(2000, 'green', 'volkswagen beetle')
-p car
-car.speed_up(15)
-car.brake(20)
-car.turn_off
-car.spray_paint('blue')
+puts car
+
+
+class Person
+  attr_accessor :name
+
+  def initialize(name)
+    # @name = name
+    self.name = name    # should we also use setter method in the constructor?
+  end
+end
+
+bob = Person.new("Steve")
+p bob.name
+bob.name = "Bob"
+p bob.name
