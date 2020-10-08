@@ -11,6 +11,7 @@ class RPSGame
     loop do
       human.choose
       computer.choose
+      display_moves
       display_winner
       break unless play_again?
     end
@@ -26,14 +27,15 @@ class RPSGame
     puts "Goodbye, #{human.name}! Thanks for playing Rock, Paper, Scissors!"
   end
 
-  def display_winner
+  def display_moves
     puts "You chose #{human.move}!"
     puts "#{computer.name} chose #{computer.move}!"
+  end
 
-    case
-    when human.move.defeats?(computer.move)
+  def display_winner
+    if human.move.defeats?(computer.move)
       puts "You won!"
-    when computer.move.defeats?(human.move)
+    elsif computer.move.defeats?(human.move)
       puts "#{computer.name} won!"
     else
       puts "It's a tie!"
@@ -44,10 +46,11 @@ class RPSGame
     answer = nil
     loop do
       puts "Would you like to play again? (y/n)"
-      answer = gets.chomp
-      break if ['y', 'n'].include?(answer.downcase)
+      answer = gets.chomp.downcase
+      break if ['y', 'n'].include?(answer)
       puts "Sorry, please enter y or n."
     end
+
     answer == 'y'
   end
 end
@@ -64,10 +67,13 @@ class Move
   end
 
   def defeats?(other)
-    if rock? then other.scissors?
-    elsif scissors? then other.paper?
-    elsif paper? then other.rock?
-    end
+    # if rock? then other.scissors?
+    # elsif scissors? then other.paper?
+    # elsif paper? then other.rock?
+    # end
+    (rock? && other.scissors?) ||
+      (scissors? && other.paper?) ||
+      (paper? && other.rock?)
   end
 
   def rock?
