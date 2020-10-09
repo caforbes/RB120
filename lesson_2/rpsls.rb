@@ -1,6 +1,8 @@
 class RPSGame
   attr_accessor :human, :computer
 
+  MAX_SCORE = 3
+
   def initialize
     @human = Human.new
     @computer = Computer.new
@@ -9,10 +11,16 @@ class RPSGame
   def play
     display_welcome_message
     loop do
-      human.choose
-      computer.choose
-      display_moves
-      display_winner
+      loop do
+        human.choose
+        computer.choose
+        display_moves
+        display_winner
+        update_scores
+        display_current_scores
+        break if final_winner?
+      end
+      display_final_winner
       break unless play_again?
     end
     display_goodbye_message
@@ -21,6 +29,7 @@ class RPSGame
   def display_welcome_message
     puts "Hi, #{human.name}! Welcome to Rock, Paper, Scissors!"
     puts "Today you are playing against #{computer.name}."
+    puts "The first to #{MAX_SCORE} points wins!"
   end
 
   def display_goodbye_message
@@ -40,6 +49,35 @@ class RPSGame
     else
       puts "It's a tie!"
     end
+  end
+
+  def update_scores
+    if human.move.defeats?(computer.move)
+      human.add_point
+    elsif computer.move.defeats?(human.move)
+      computer.add_point
+    end
+  end
+
+  def display_current_scores
+    puts "========================"
+    puts "CURRENT SCORES:"
+    puts "#{human.name}: #{human.score} | #{computer.name}: #{computer.score}"
+    puts "========================"
+  end
+
+  def final_winner?
+    human.score == MAX_SCORE || computer.score == MAX_SCORE
+  end
+
+  def display_final_winner
+    if human.score == MAX_SCORE
+      winner = human.name
+    else
+      winner = computer.name
+    end
+
+    puts "\nTHE FINAL WINNER IS #{winner.upcase}!!!!\n"
   end
 
   def play_again?
@@ -67,10 +105,6 @@ class Move
   end
 
   def defeats?(other)
-    # if rock? then other.scissors?
-    # elsif scissors? then other.paper?
-    # elsif paper? then other.rock?
-    # end
     (rock? && other.scissors?) ||
       (scissors? && other.paper?) ||
       (paper? && other.rock?)
@@ -91,9 +125,15 @@ end
 
 class Player
   attr_accessor :move, :name
+  attr_reader :score
 
   def initialize
     set_name
+    @score = 0
+  end
+
+  def add_point
+    @score += 1
   end
 end
 
