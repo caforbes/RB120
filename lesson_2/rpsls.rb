@@ -12,18 +12,22 @@ class RPSGame
     display_welcome_message
     loop do
       loop do
-        human.choose
-        computer.choose
-        display_moves
-        display_winner
-        update_scores
-        display_current_scores
+        play_game_round
         break if final_winner?
       end
       display_final_winner
       break unless play_again?
     end
     display_goodbye_message
+  end
+
+  def play_game_round
+    human.choose
+    computer.choose
+    display_moves
+    display_winner
+    update_scores
+    display_current_scores
   end
 
   def display_welcome_message
@@ -71,11 +75,7 @@ class RPSGame
   end
 
   def display_final_winner
-    if human.score == MAX_SCORE
-      winner = human.name
-    else
-      winner = computer.name
-    end
+    winner = human.score == MAX_SCORE ? human.name : computer.name
 
     puts "\nTHE FINAL WINNER IS #{winner.upcase}!!!!\n"
   end
