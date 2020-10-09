@@ -22,6 +22,7 @@ class RPSGame
   end
 
   def play_game_round
+    clear_and_continue
     human.choose
     computer.choose
     display_moves
@@ -38,6 +39,12 @@ class RPSGame
 
   def display_goodbye_message
     puts "Goodbye, #{human.name}! Thanks for playing Rock, Paper, Scissors!"
+  end
+
+  def clear_and_continue
+    puts "Ready? Press enter for the next round."
+    gets.chomp
+    system('clear') || system('cls')
   end
 
   def display_moves
@@ -104,6 +111,20 @@ class Move
     @value
   end
 
+  def self.numbered_options
+    VALUES.map.with_index do |option, index|
+      "(#{index + 1}) #{option}"
+    end
+  end
+
+  def self.convert_numeric_choice(input)
+    if input == input.to_i.to_s && (1..VALUES.length).include?(input.to_i)
+      VALUES[input.to_i - 1]
+    else
+      input
+    end
+  end
+
   def defeats?(other)
     (rock? && other.scissors?) ||
       (scissors? && other.paper?) ||
@@ -152,8 +173,9 @@ class Human < Player
   def choose
     choice = nil
     loop do
-      puts "Please choose rock, paper, or scissors:"
-      choice = gets.chomp
+      puts "Please choose a move:"
+      puts Move.numbered_options
+      choice = Move.convert_numeric_choice(gets.chomp)
       break if Move::VALUES.include?(choice)
       puts "Sorry, invalid choice."
     end
