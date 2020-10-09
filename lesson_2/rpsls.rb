@@ -1,5 +1,5 @@
 class RPSGame
-  attr_accessor :human, :computer
+  attr_reader :human, :computer, :final_winner
 
   MAX_SCORE = 3
 
@@ -13,10 +13,11 @@ class RPSGame
     loop do
       loop do
         play_game_round
-        break if final_winner?
+        break if @final_winner
       end
       display_final_winner
       break unless play_again?
+      reset_scores
     end
     display_goodbye_message
   end
@@ -27,18 +28,22 @@ class RPSGame
     computer.choose
     display_moves
     display_winner
-    update_scores
+    calculate_wins
     display_current_scores
   end
 
+  def game_title
+    Move::VALUES.map(&:capitalize).join(', ')
+  end
+
   def display_welcome_message
-    puts "Hi, #{human.name}! Welcome to Rock, Paper, Scissors!"
+    puts "Hi, #{human.name}! Welcome to #{game_title}!"
     puts "Today you are playing against #{computer.name}."
     puts "The first to #{MAX_SCORE} points wins!"
   end
 
   def display_goodbye_message
-    puts "Goodbye, #{human.name}! Thanks for playing Rock, Paper, Scissors!"
+    puts "Goodbye, #{human.name}! Thanks for playing #{game_title}!"
   end
 
   def clear_and_continue
@@ -54,12 +59,17 @@ class RPSGame
 
   def display_winner
     if human.move.defeats?(computer.move)
-      puts "You won!"
+      puts "You won this round!"
     elsif computer.move.defeats?(human.move)
-      puts "#{computer.name} won!"
+      puts "#{computer.name} won this round!"
     else
       puts "It's a tie!"
     end
+  end
+
+  def calculate_wins
+    update_scores
+    set_winner
   end
 
   def update_scores
@@ -70,6 +80,18 @@ class RPSGame
     end
   end
 
+  def set_winner
+    @final_winner = if human.score >= MAX_SCORE then human
+                    elsif computer.score >= MAX_SCORE then computer
+                    end
+  end
+
+  def reset_scores
+    human.reset_score
+    computer.reset_score
+    set_winner
+  end
+
   def display_current_scores
     puts "========================"
     puts "CURRENT SCORES:"
@@ -77,14 +99,9 @@ class RPSGame
     puts "========================"
   end
 
-  def final_winner?
-    human.score == MAX_SCORE || computer.score == MAX_SCORE
-  end
 
   def display_final_winner
-    winner = human.score == MAX_SCORE ? human.name : computer.name
-
-    puts "\nTHE FINAL WINNER IS #{winner.upcase}!!!!\n"
+    puts "\nTHE FINAL WINNER IS **#{final_winner.name.upcase}**!!!!\n"
   end
 
   def play_again?
@@ -100,50 +117,6 @@ class RPSGame
   end
 end
 
-class Move
-  VALUES = ['rock', 'paper', 'scissors']
-
-  def initialize(value)
-    @value = value
-  end
-
-  def to_s
-    @value
-  end
-
-  def self.numbered_options
-    VALUES.map.with_index do |option, index|
-      "(#{index + 1}) #{option}"
-    end
-  end
-
-  def self.convert_numeric_choice(input)
-    if input == input.to_i.to_s && (1..VALUES.length).include?(input.to_i)
-      VALUES[input.to_i - 1]
-    else
-      input
-    end
-  end
-
-  def defeats?(other)
-    (rock? && other.scissors?) ||
-      (scissors? && other.paper?) ||
-      (paper? && other.rock?)
-  end
-
-  def rock?
-    @value == Move::VALUES[0] # rock
-  end
-
-  def paper?
-    @value == Move::VALUES[1] # paper
-  end
-
-  def scissors?
-    @value == Move::VALUES[2] # scissors
-  end
-end
-
 class Player
   attr_accessor :move, :name
   attr_reader :score
@@ -155,6 +128,10 @@ class Player
 
   def add_point
     @score += 1
+  end
+
+  def reset_score
+    @score = 0
   end
 end
 
@@ -190,6 +167,64 @@ class Computer < Player
 
   def choose
     self.move = Move.new(Move::VALUES.sample)
+  end
+end
+
+class Move
+  VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
+
+  def initialize(value)
+    @value = value
+  end
+
+  def to_s
+    @value
+  end
+
+  def self.numbered_options
+    VALUES.map.with_index do |option, index|
+      "(#{index + 1}) #{option}"
+    end
+  end
+
+  def self.convert_numeric_choice(input)
+    if input == input.to_i.to_s && (1..VALUES.length).include?(input.to_i)
+      VALUES[input.to_i - 1]
+    else
+      input
+    end
+  end
+
+  def defeats?(other)
+    case
+    when rock? then other.scissors? || other.lizard?
+    when paper? then other.rock? || other.spock?
+    when scissors? then other.paper? || other.lizard?
+    when lizard? then other.spock? || other.paper?
+    when spock? then other.rock? || other.scissors?
+    end
+  end
+
+  protected
+
+  def rock?
+    @value == Move::VALUES[0] # rock
+  end
+
+  def paper?
+    @value == Move::VALUES[1] # paper
+  end
+
+  def scissors?
+    @value == Move::VALUES[2] # scissors
+  end
+
+  def lizard?
+    @value == Move::VALUES[3] # lizard
+  end
+
+  def spock?
+    @value == Move::VALUES[4] # spock
   end
 end
 
