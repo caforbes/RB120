@@ -152,7 +152,7 @@ class Human < Player
       break if Move::VALUES.include?(choice)
       puts "Sorry, invalid choice."
     end
-    self.move = Move.new(choice)
+    self.move = Move.make(choice)
   end
 end
 
@@ -162,19 +162,31 @@ class Computer < Player
   end
 
   def choose
-    self.move = Move.new(Move::VALUES.sample)
+    self.move = Move.make(Move::VALUES.sample)
   end
 end
 
 class Move
   VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
 
-  def initialize(value)
-    @value = value
+  attr_reader :type
+
+  def initialize
+    @type = self.class.to_s.downcase
   end
 
   def to_s
-    @value
+    @type
+  end
+
+  def self.make(choice)
+    case choice
+    when VALUES[0] then Rock.new
+    when VALUES[1] then Paper.new
+    when VALUES[2] then Scissors.new
+    when VALUES[3] then Lizard.new
+    when VALUES[4] then Spock.new
+    end
   end
 
   def self.numbered_options
@@ -190,39 +202,35 @@ class Move
       input
     end
   end
+end
 
-  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+class Rock < Move
   def defeats?(other)
-    case @value
-    when 'rock' then other.scissors? || other.lizard?
-    when 'paper' then other.rock? || other.spock?
-    when 'scissors' then other.paper? || other.lizard?
-    when 'lizard' then other.spock? || other.paper?
-    when 'spock' then other.rock? || other.scissors?
-    end
+    other.is_a?(Scissors) || other.is_a?(Lizard)
   end
-  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+end
 
-  protected
-
-  def rock?
-    @value == Move::VALUES[0] # rock
+class Paper < Move
+  def defeats?(other)
+    other.is_a?(Rock) || other.is_a?(Spock)
   end
+end
 
-  def paper?
-    @value == Move::VALUES[1] # paper
+class Scissors < Move
+  def defeats?(other)
+    other.is_a?(Paper) || other.is_a?(Lizard)
   end
+end
 
-  def scissors?
-    @value == Move::VALUES[2] # scissors
+class Lizard < Move
+  def defeats?(other)
+    other.is_a?(Spock) || other.is_a?(Paper)
   end
+end
 
-  def lizard?
-    @value == Move::VALUES[3] # lizard
-  end
-
-  def spock?
-    @value == Move::VALUES[4] # spock
+class Spock < Move
+  def defeats?(other)
+    other.is_a?(Rock) || other.is_a?(Scissors)
   end
 end
 
