@@ -11,10 +11,7 @@ class RPSGame
   def play
     display_welcome_message
     loop do
-      loop do
-        play_game_round
-        break if @final_winner
-      end
+      play_game_rounds until final_winner
       display_final_winner
       break unless play_again?
       reset_scores
@@ -22,7 +19,7 @@ class RPSGame
     display_goodbye_message
   end
 
-  def play_game_round
+  def play_game_rounds
     clear_and_continue
     human.choose
     computer.choose
@@ -30,10 +27,6 @@ class RPSGame
     display_winner
     calculate_wins
     display_current_scores
-  end
-
-  def game_title
-    Move::VALUES.map(&:capitalize).join(', ')
   end
 
   def display_welcome_message
@@ -44,6 +37,10 @@ class RPSGame
 
   def display_goodbye_message
     puts "Goodbye, #{human.name}! Thanks for playing #{game_title}!"
+  end
+
+  def game_title
+    Move::VALUES.map(&:capitalize).join(', ')
   end
 
   def clear_and_continue
@@ -98,7 +95,6 @@ class RPSGame
     puts "#{human.name}: #{human.score} | #{computer.name}: #{computer.score}"
     puts "========================"
   end
-
 
   def display_final_winner
     puts "\nTHE FINAL WINNER IS **#{final_winner.name.upcase}**!!!!\n"
@@ -195,15 +191,17 @@ class Move
     end
   end
 
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def defeats?(other)
-    case
-    when rock? then other.scissors? || other.lizard?
-    when paper? then other.rock? || other.spock?
-    when scissors? then other.paper? || other.lizard?
-    when lizard? then other.spock? || other.paper?
-    when spock? then other.rock? || other.scissors?
+    case @value
+    when 'rock' then other.scissors? || other.lizard?
+    when 'paper' then other.rock? || other.spock?
+    when 'scissors' then other.paper? || other.lizard?
+    when 'lizard' then other.spock? || other.paper?
+    when 'spock' then other.rock? || other.scissors?
     end
   end
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
   protected
 
