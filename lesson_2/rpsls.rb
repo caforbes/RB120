@@ -166,7 +166,7 @@ class Computer < Player
     "R2D2",
     "C3PO",
     "Alexa",
-    "Siri",
+    "Siri"
   ]
 
   def initialize
@@ -178,6 +178,12 @@ class Computer < Player
     self.name = PERSONALITIES.sample
   end
 
+  def choose
+    self.move = Move.make(moveset.sample)
+    history << move
+    update_moveset if name == 'Siri' && history.size == 5
+  end
+
   def set_moveset
     moveset_by_personality = {
       "Computer" => Move::VALUES,
@@ -185,16 +191,9 @@ class Computer < Player
       "C3PO" => ['paper', 'paper', 'paper', 'spock'],
       "Alexa" =>
         [Move::VALUES.sample, Move::VALUES.sample, Move::VALUES.sample],
-      "Siri" => Move::VALUES,
+      "Siri" => Move::VALUES
     }
-
     @moveset = moveset_by_personality[name]
-  end
-
-  def choose
-    self.move = Move.make(moveset.sample)
-    history << move
-    update_moveset if name == 'Siri' && history.size == 5
   end
 
   def update_moveset
