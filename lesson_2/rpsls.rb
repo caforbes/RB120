@@ -115,11 +115,12 @@ end
 
 class Player
   attr_accessor :move, :name
-  attr_reader :score
+  attr_reader :score, :history
 
   def initialize
     set_name
     @score = 0
+    @history = []
   end
 
   def add_point
@@ -153,16 +154,51 @@ class Human < Player
       puts "Sorry, invalid choice."
     end
     self.move = Move.make(choice)
+    history << move
   end
 end
 
 class Computer < Player
+  attr_reader :moveset
+
+  PERSONALITIES = [
+    "Computer",
+    "R2D2",
+    "C3PO",
+    "Alexa",
+    "Siri",
+  ]
+
+  def initialize
+    super
+    set_moveset
+  end
+
   def set_name
-    self.name = ["Computer", "R2D2", "C3P0"].sample
+    self.name = PERSONALITIES.sample
+  end
+
+  def set_moveset
+    moveset_by_personality = {
+      "Computer" => Move::VALUES,
+      "R2D2" => ['rock'],
+      "C3PO" => ['paper', 'paper', 'paper', 'spock'],
+      "Alexa" =>
+        [Move::VALUES.sample, Move::VALUES.sample, Move::VALUES.sample],
+      "Siri" => Move::VALUES,
+    }
+
+    @moveset = moveset_by_personality[name]
   end
 
   def choose
-    self.move = Move.make(Move::VALUES.sample)
+    self.move = Move.make(moveset.sample)
+    history << move
+    update_moveset if name == 'Siri' && history.size == 5
+  end
+
+  def update_moveset
+    @moveset = history
   end
 end
 
@@ -180,7 +216,7 @@ class Move
   end
 
   def self.make(choice)
-    case choice
+    case choice.to_s
     when VALUES[0] then Rock.new
     when VALUES[1] then Paper.new
     when VALUES[2] then Scissors.new
