@@ -5,7 +5,7 @@ class RPSGame
 
   def initialize
     @human = Human.new
-    @computer = Computer.new
+    @computer = Computer.random
   end
 
   def play
@@ -23,6 +23,7 @@ class RPSGame
     clear_and_continue
     human.choose
     computer.choose
+    clear_screen
     display_moves
     display_winner
     calculate_wins
@@ -43,10 +44,14 @@ class RPSGame
     Move::VALUES.map(&:capitalize).join(', ')
   end
 
+  def clear_screen
+    system('clear') || system('cls')
+  end
+
   def clear_and_continue
     puts "Ready? Press enter for the next round."
     gets.chomp
-    system('clear') || system('cls')
+    clear_screen
   end
 
   def display_moves
@@ -159,15 +164,9 @@ class Human < Player
 end
 
 class Computer < Player
-  attr_reader :moveset
-
-  PERSONALITIES = [
-    "Computer",
-    "R2D2",
-    "C3PO",
-    "Alexa",
-    "Siri"
-  ]
+  def self.random
+    [Computer, R2D2, C3PO, Alexa, Siri].sample.new
+  end
 
   def initialize
     super
@@ -175,25 +174,41 @@ class Computer < Player
   end
 
   def set_name
-    self.name = PERSONALITIES.sample
-  end
-
-  def choose
-    self.move = Move.make(moveset.sample)
-    history << move
-    update_moveset if name == 'Siri' && history.size == 5
+    self.name = self.class.to_s
   end
 
   def set_moveset
-    moveset_by_personality = {
-      "Computer" => Move::VALUES,
-      "R2D2" => ['rock'],
-      "C3PO" => ['paper', 'paper', 'paper', 'spock'],
-      "Alexa" =>
-        [Move::VALUES.sample, Move::VALUES.sample, Move::VALUES.sample],
-      "Siri" => Move::VALUES
-    }
-    @moveset = moveset_by_personality[name]
+    @moveset = Move::VALUES
+  end
+
+  def choose
+    self.move = Move.make(@moveset.sample)
+    history << move
+  end
+end
+
+class R2D2 < Computer
+  def set_moveset
+    @moveset = ['rock']
+  end
+end
+
+class C3PO < Computer
+  def set_moveset
+    @moveset = ['paper', 'paper', 'spock']
+  end
+end
+
+class Alexa < Computer
+  def set_moveset
+    @moveset = Move::VALUES.sample(3)
+  end
+end
+
+class Siri < Computer
+  def choose
+    super
+    update_moveset if history.size == 5
   end
 
   def update_moveset
