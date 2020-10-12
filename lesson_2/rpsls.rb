@@ -9,6 +9,7 @@ class RPSGame
   end
 
   def play
+    clear_screen
     display_welcome_message
     loop do
       play_game_rounds until final_winner
@@ -143,7 +144,7 @@ class Human < Player
     loop do
       puts "What's your name?"
       n = gets.chomp
-      break unless n.empty?
+      break unless n =~ /^\s*$/
       puts "Sorry, please enter a value."
     end
     self.name = n
