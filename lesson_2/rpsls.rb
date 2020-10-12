@@ -1,15 +1,13 @@
 class RPSGame
-  attr_reader :human, :computer, :final_winner
-
   MAX_SCORE = 3
 
   def initialize
+    clear_screen
     @human = Human.new
     @computer = Computer.random
   end
 
   def play
-    clear_screen
     display_welcome_message
     loop do
       play_game_rounds until final_winner
@@ -19,6 +17,10 @@ class RPSGame
     end
     display_goodbye_message
   end
+
+  private
+
+  attr_reader :human, :computer, :final_winner
 
   def play_game_rounds
     clear_and_continue
@@ -60,30 +62,35 @@ class RPSGame
     puts "#{computer.name} chose #{computer.move}!"
   end
 
+  def round_winner
+    if human.defeats?(computer)
+      human
+    elsif computer.defeats?(human)
+      computer
+    end
+  end
+
   def display_winner
-    if human.move.defeats?(computer.move)
-      puts "You won this round!"
-    elsif computer.move.defeats?(human.move)
-      puts "#{computer.name} won this round!"
-    else
-      puts "It's a tie!"
+    case round_winner
+    when human then puts "You won this round!"
+    when computer then puts "#{computer.name} won this round!"
+    else puts "It's a tie!"
     end
   end
 
   def calculate_wins
     update_scores
-    set_winner
+    set_game_winner
   end
 
   def update_scores
-    if human.move.defeats?(computer.move)
-      human.add_point
-    elsif computer.move.defeats?(human.move)
-      computer.add_point
+    case round_winner
+    when human then human.add_point
+    when computer then computer.add_point
     end
   end
 
-  def set_winner
+  def set_game_winner
     @final_winner = if human.score >= MAX_SCORE then human
                     elsif computer.score >= MAX_SCORE then computer
                     end
@@ -92,7 +99,7 @@ class RPSGame
   def reset_scores
     human.reset_score
     computer.reset_score
-    set_winner
+    set_game_winner
   end
 
   def display_current_scores
@@ -127,6 +134,10 @@ class Player
     set_name
     @score = 0
     @history = []
+  end
+
+  def defeats?(other)
+    move.defeats?(other.move)
   end
 
   def add_point
