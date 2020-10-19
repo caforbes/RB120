@@ -1,22 +1,32 @@
+require 'pry'
+
 class TTTGame
-  attr_reader :board
+  HUMAN_MARKER = 'X'
+  COMPUTER_MARKER = 'O'
+
+  attr_reader :board, :human, :computer
 
   def initialize
     @board = Board.new
+    @human = Player.new(HUMAN_MARKER)
+    @computer = Player.new(COMPUTER_MARKER)
   end
 
   def play
     display_welcome_message
-    loop do
-      display_board
-      break
-      first_player_moves
-      break if someone_won? || board_full?
+    display_board
 
-      second_player_moves
-      break if someone_won? || board_full?
+    loop do
+      human_moves
+      break if board.full?
+      # break if someone_won? || board_full?
+      computer_moves
+      break if board.full?
+      # break if someone_won? || board_full?
+
+      display_board
     end
-    # display_result
+    display_result
     display_goodbye_message
   end
 
@@ -30,7 +40,10 @@ class TTTGame
     puts "Thanks for playing Tic Tac Toe! Goodbye!"
   end
 
-  def display_board
+  def display_board # why is this in game not board?
+    system('clear') || system('cls')
+    puts "You are #{human.marker}. Computer is #{computer.marker}."
+
     puts "     |     |"
     puts "  #{board.get_square_at(1)}  |  #{board.get_square_at(2)}  |    #{board.get_square_at(3)}"
     puts "     |     |"
@@ -43,36 +56,77 @@ class TTTGame
     puts "  #{board.get_square_at(7)}  |  #{board.get_square_at(8)}  |    #{board.get_square_at(9)}"
     puts "     |     |"
   end
+
+  def display_result
+    display_board
+    puts "The board is full!"
+  end
+
+  def human_moves
+    puts "Choose an empty square (#{board.unmarked_keys.join(', ')}): "
+    square = nil
+    loop do
+      square = gets.chomp.to_i
+      break if board.unmarked_keys.include?(square)
+      puts "Sorry, that's not a valid choice."
+    end
+
+    board.set_square_at(square, human.marker)
+  end
+
+  def computer_moves
+    num = board.unmarked_keys.sample
+
+    board.set_square_at(num, computer.marker)
+  end
 end
 
 class Board
-  INITIAL_MARKER = ' '
-
   def initialize
     @squares = {}
-    (1..9).each { |key| @squares[key] = Square.new(INITIAL_MARKER) }
+    (1..9).each { |key| @squares[key] = Square.new }
   end
 
   def get_square_at(key) # returns Square
     @squares[key]
   end
+
+  def set_square_at(key, marker)
+    @squares[key].marker = marker
+  end
+
+  def unmarked_keys
+    @squares.keys.select { |key| @squares[key].unmarked? }
+  end
+
+  def full?
+    unmarked_keys.empty?
+  end
 end
 
 class Square
-  def initialize(marker)
-    @marker = marker
+  INITIAL_MARKER = ' '
+
+  attr_accessor :marker
+
+  def initialize
+    @marker = INITIAL_MARKER
   end
 
   def to_s
-    @marker
+    marker
+  end
+
+  def unmarked?
+    marker == INITIAL_MARKER
   end
 end
 
 class Player
-  def initialize
-  end
+  attr_reader :marker
 
-  def mark
+  def initialize(marker)
+    @marker = marker
   end
 end
 
