@@ -16,7 +16,7 @@ class TTTGame
     display_welcome_message
 
     loop do
-      display_board(false)
+      display_board
 
       loop do
         human_moves
@@ -25,16 +25,13 @@ class TTTGame
         computer_moves
         break if board.someone_won? || board.full?
 
-        display_board
+        clear_screen_and_display_board
       end
 
       display_result
       break unless play_again?
-
-      clear_screen
-      puts "Let's play again!"
-      puts
-      board.reset
+      display_new_game_message
+      reset
     end
 
     display_goodbye_message
@@ -55,27 +52,22 @@ class TTTGame
     system('clear') || system('cls')
   end
 
-  def display_board(clear = true)
-    clear_screen if clear
+  def display_board
     puts "You are #{human.marker}. Computer is #{computer.marker}."
+    puts
+    board.draw
+    puts
+  end
 
-    puts "     |     |"
-    puts "  #{board.get_square_at(1)}  |  #{board.get_square_at(2)}  |  #{board.get_square_at(3)}"
-    puts "     |     |"
-    puts "-----+-----+-----"
-    puts "     |     |"
-    puts "  #{board.get_square_at(4)}  |  #{board.get_square_at(5)}  |  #{board.get_square_at(6)}"
-    puts "     |     |"
-    puts "-----+-----+-----"
-    puts "     |     |"
-    puts "  #{board.get_square_at(7)}  |  #{board.get_square_at(8)}  |  #{board.get_square_at(9)}"
-    puts "     |     |"
+  def clear_screen_and_display_board
+    clear_screen
+    display_board
   end
 
   def display_result
-    display_board
+    clear_screen_and_display_board
 
-    case board.detect_winner
+    case board.winning_marker
     when HUMAN_MARKER
       puts "You won!"
     when COMPUTER_MARKER
@@ -95,6 +87,16 @@ class TTTGame
     end
 
     answer == 'y'
+  end
+
+  def display_new_game_message
+    clear_screen
+    puts "Let's play again!"
+    puts
+  end
+
+  def reset
+    board.reset
   end
 
   def human_moves
@@ -126,6 +128,20 @@ class Board
     reset
   end
 
+  def draw
+    puts "     |     |"
+    puts "  #{get_square_at(1)}  |  #{get_square_at(2)}  |  #{get_square_at(3)}"
+    puts "     |     |"
+    puts "-----+-----+-----"
+    puts "     |     |"
+    puts "  #{get_square_at(4)}  |  #{get_square_at(5)}  |  #{get_square_at(6)}"
+    puts "     |     |"
+    puts "-----+-----+-----"
+    puts "     |     |"
+    puts "  #{get_square_at(7)}  |  #{get_square_at(8)}  |  #{get_square_at(9)}"
+    puts "     |     |"
+  end
+
   def reset
     (1..9).each { |key| @squares[key] = Square.new }
   end
@@ -147,10 +163,10 @@ class Board
   end
 
   def someone_won?
-    !!detect_winner
+    !!winning_marker
   end
 
-  def detect_winner # returns winning marker or nil
+  def winning_marker # returns winning marker or nil
     WINNING_LINES.each do |line|
       current_markers = @squares.values_at(*line).map(&:marker)
 
