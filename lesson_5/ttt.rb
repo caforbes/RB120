@@ -14,23 +14,34 @@ class TTTGame
 
   def play
     display_welcome_message
-    display_board
 
     loop do
-      human_moves
-      break if board.someone_won? || board.full?
-      # break if someone_won? || board_full?
-      computer_moves
-      break if board.someone_won? || board.full?
-      # break if someone_won? || board_full?
+      display_board(false)
 
-      display_board
+      loop do
+        human_moves
+        break if board.someone_won? || board.full?
+
+        computer_moves
+        break if board.someone_won? || board.full?
+
+        display_board
+      end
+
+      display_result
+      break unless play_again?
+
+      clear_screen
+      puts "Let's play again!"
+      puts
+      board.reset
     end
-    display_result
+
     display_goodbye_message
   end
 
   def display_welcome_message
+    clear_screen
     puts "Welcome to Tic Tac Toe!"
     puts
   end
@@ -40,8 +51,12 @@ class TTTGame
     puts "Thanks for playing Tic Tac Toe! Goodbye!"
   end
 
-  def display_board # why is this in game not board?
+  def clear_screen
     system('clear') || system('cls')
+  end
+
+  def display_board(clear = true)
+    clear_screen if clear
     puts "You are #{human.marker}. Computer is #{computer.marker}."
 
     puts "     |     |"
@@ -70,6 +85,18 @@ class TTTGame
     end
   end
 
+  def play_again?
+    answer = nil
+    loop do
+      puts "Would you like to play again? (y/n)"
+      answer = gets.chomp.downcase
+      break if ['y', 'n'].include?(answer)
+      puts "Sorry, please answer (y) or (n)."
+    end
+
+    answer == 'y'
+  end
+
   def human_moves
     puts "Choose an empty square (#{board.unmarked_keys.join(', ')}): "
     square = nil
@@ -96,6 +123,10 @@ class Board
 
   def initialize
     @squares = {}
+    reset
+  end
+
+  def reset
     (1..9).each { |key| @squares[key] = Square.new }
   end
 
