@@ -108,13 +108,13 @@ class TTTGame
       puts "Sorry, that's not a valid choice."
     end
 
-    board.set_square_at(square, human.marker)
+    board[square] = human.marker
   end
 
   def computer_moves
-    num = board.unmarked_keys.sample
+    square = board.unmarked_keys.sample
 
-    board.set_square_at(num, computer.marker)
+    board[square] = computer.marker
   end
 end
 
@@ -130,15 +130,15 @@ class Board
 
   def draw
     puts "     |     |"
-    puts "  #{get_square_at(1)}  |  #{get_square_at(2)}  |  #{get_square_at(3)}"
+    puts "  #{@squares[1]}  |  #{@squares[2]}  |  #{@squares[3]}"
     puts "     |     |"
     puts "-----+-----+-----"
     puts "     |     |"
-    puts "  #{get_square_at(4)}  |  #{get_square_at(5)}  |  #{get_square_at(6)}"
+    puts "  #{@squares[4]}  |  #{@squares[5]}  |  #{@squares[6]}"
     puts "     |     |"
     puts "-----+-----+-----"
     puts "     |     |"
-    puts "  #{get_square_at(7)}  |  #{get_square_at(8)}  |  #{get_square_at(9)}"
+    puts "  #{@squares[7]}  |  #{@squares[8]}  |  #{@squares[9]}"
     puts "     |     |"
   end
 
@@ -146,11 +146,7 @@ class Board
     (1..9).each { |key| @squares[key] = Square.new }
   end
 
-  def get_square_at(key) # returns Square
-    @squares[key]
-  end
-
-  def set_square_at(key, marker)
+  def []=(key, marker)
     @squares[key].marker = marker
   end
 
@@ -168,29 +164,16 @@ class Board
 
   def winning_marker # returns winning marker or nil
     WINNING_LINES.each do |line|
-      current_markers = @squares.values_at(*line).map(&:marker)
-
-      if current_markers.all? {|marker| marker == TTTGame::HUMAN_MARKER }
-        return TTTGame::HUMAN_MARKER
-      elsif current_markers.all? {|marker| marker == TTTGame::COMPUTER_MARKER }
-        return TTTGame::COMPUTER_MARKER
-      end
-      # if count_human_marker(current_squares) == 3
-      #   return TTTGame::HUMAN_MARKER
-      # elsif count_computer_marker(current_squares) == 3
-      #   return TTTGame::COMPUTER_MARKER
-      # end
+      current_squares = @squares.values_at(*line)
+      return current_squares.first.marker if three_in_a_row?(current_squares)
     end
     nil
   end
 
-  # def count_human_marker(squares)
-  #   squares.collect(&:marker).count(TTTGame::HUMAN_MARKER)
-  # end
-
-  # def count_computer_marker(squares)
-  #   squares.collect(&:marker).count(TTTGame::COMPUTER_MARKER)
-  # end
+  def three_in_a_row?(squares)
+    markers = squares.reject(&:unmarked?).map(&:marker)
+    markers.size == 3 && markers.uniq.size == 1
+  end
 end
 
 class Square
