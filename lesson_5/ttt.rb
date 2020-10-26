@@ -1,15 +1,13 @@
 require 'pry'
 
 class TTTGame
-  HUMAN_MARKER = 'X'
-  COMPUTER_MARKER = 'O'
-
-  attr_reader :board, :human, :computer
+  attr_reader :board, :human, :computer, :current_player
 
   def initialize
     @board = Board.new
-    @human = Player.new(HUMAN_MARKER)
-    @computer = Player.new(COMPUTER_MARKER)
+    @human = Human.new
+    @computer = Computer.new
+    @current_player = first_player
   end
 
   def play
@@ -19,13 +17,9 @@ class TTTGame
       display_board
 
       loop do
-        human_moves
+        current_player_moves
         break if board.someone_won? || board.full?
-
-        computer_moves
-        break if board.someone_won? || board.full?
-
-        clear_screen_and_display_board
+        clear_screen_and_display_board if humans_turn?
       end
 
       display_result
@@ -64,13 +58,35 @@ class TTTGame
     display_board
   end
 
+  def current_player_moves
+    square = current_player.choose(board.unmarked_keys)
+    board[square] = current_player.marker
+
+    change_current_player
+  end
+
+  def change_current_player
+    @current_player = case current_player
+                      when human then computer
+                      when computer then human
+                      end
+  end
+
+  def humans_turn?
+    current_player == human
+  end
+
+  def first_player
+    human
+  end
+
   def display_result
     clear_screen_and_display_board
 
     case board.winning_marker
-    when HUMAN_MARKER
+    when human.marker
       puts "You won!"
-    when COMPUTER_MARKER
+    when computer.marker
       puts "Computer won!"
     else
       puts "It's a tie!"
@@ -97,16 +113,11 @@ class TTTGame
 
   def reset
     board.reset
+    @current_player = first_player
   end
 
   def human_moves
-    puts "Choose an empty square (#{board.unmarked_keys.join(', ')}): "
-    square = nil
-    loop do
-      square = gets.chomp.to_i
-      break if board.unmarked_keys.include?(square)
-      puts "Sorry, that's not a valid choice."
-    end
+
 
     board[square] = human.marker
   end
@@ -170,6 +181,8 @@ class Board
     nil
   end
 
+  private
+
   def three_in_a_row?(squares)
     markers = squares.reject(&:unmarked?).map(&:marker)
     markers.size == 3 && markers.uniq.size == 1
@@ -195,10 +208,36 @@ class Square
 end
 
 class Player
-  attr_reader :marker
+  HUMAN_MARKER = 'X'
+  COMPUTER_MARKER = 'O'
 
-  def initialize(marker)
-    @marker = marker
+  attr_reader :marker
+end
+
+class Human < Player
+  def initialize
+    @marker = HUMAN_MARKER
+  end
+
+  def choose(possible_squares)
+    puts "Choose an empty square (#{possible_squares.join(', ')}): "
+    square = nil
+    loop do
+      square = gets.chomp.to_i
+      break if possible_squares.include?(square)
+      puts "Sorry, that's not a valid choice."
+    end
+    square
+  end
+end
+
+class Computer < Player
+  def initialize
+    @marker = COMPUTER_MARKER
+  end
+
+  def choose(possible_squares)
+    possible_squares.sample
   end
 end
 
