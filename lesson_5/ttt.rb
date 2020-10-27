@@ -1,5 +1,3 @@
-require 'pry'
-
 class TTTGame
   attr_reader :board, :human, :computer, :current_player
 
@@ -30,6 +28,8 @@ class TTTGame
 
     display_goodbye_message
   end
+
+  private
 
   def display_welcome_message
     clear_screen
@@ -219,12 +219,12 @@ class Human < Player
     @marker = HUMAN_MARKER
   end
 
-  def choose(possible_squares)
-    puts "Choose an empty square (#{possible_squares.join(', ')}): "
+  def choose(options)
+    puts "Choose an empty square (#{options.join(', ')}): "
     square = nil
     loop do
       square = gets.chomp.to_i
-      break if possible_squares.include?(square)
+      break if options.include?(square)
       puts "Sorry, that's not a valid choice."
     end
     square
@@ -236,8 +236,8 @@ class Computer < Player
     @marker = COMPUTER_MARKER
   end
 
-  def choose(possible_squares)
-    possible_squares.sample
+  def choose(options)
+    options.sample
   end
 end
 
