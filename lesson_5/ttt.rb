@@ -10,26 +10,31 @@ class TTTGame
 
   def play
     display_welcome_message
+    main_game
+    display_goodbye_message
+  end
 
+  private
+
+  def main_game
     loop do
       display_board
-
-      loop do
-        current_player_moves
-        break if board.someone_won? || board.full?
-        clear_screen_and_display_board if humans_turn?
-      end
+      players_move
 
       display_result
       break unless play_again?
       display_new_game_message
       reset
     end
-
-    display_goodbye_message
   end
 
-  private
+  def players_move
+    loop do
+      current_player_moves
+      break if board.someone_won? || board.full?
+      clear_screen_and_display_board if humans_turn?
+    end
+  end
 
   def display_welcome_message
     clear_screen
@@ -115,18 +120,6 @@ class TTTGame
     board.reset
     @current_player = first_player
   end
-
-  def human_moves
-
-
-    board[square] = human.marker
-  end
-
-  def computer_moves
-    square = board.unmarked_keys.sample
-
-    board[square] = computer.marker
-  end
 end
 
 class Board
@@ -139,6 +132,8 @@ class Board
     reset
   end
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
   def draw
     puts "     |     |"
     puts "  #{@squares[1]}  |  #{@squares[2]}  |  #{@squares[3]}"
@@ -152,6 +147,8 @@ class Board
     puts "  #{@squares[7]}  |  #{@squares[8]}  |  #{@squares[9]}"
     puts "     |     |"
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
 
   def reset
     (1..9).each { |key| @squares[key] = Square.new }
