@@ -108,6 +108,11 @@ class TTTGame
   end
 
   def computer_move
+    best_choice ||= board.third_consecutive_key(computer.marker) # offense
+    best_choice ||= board.third_consecutive_key(human.marker) # defense
+    best_choice ||= Board::MIDDLE if board.unmarked_keys.include?(Board::MIDDLE)
+
+    return best_choice if best_choice
     board.unmarked_keys.sample
   end
 
@@ -223,6 +228,8 @@ class Board
                   [[1, 4, 7], [2, 5, 8], [3, 6, 9]] + # cols
                   [[1, 5, 9], [3, 5, 7]] # diags
 
+  MIDDLE = 5
+
   def initialize
     @squares = {}
     reset
@@ -269,16 +276,33 @@ class Board
   def winning_marker # returns winning marker or nil
     WINNING_LINES.each do |line|
       current_squares = @squares.values_at(*line)
-      return current_squares.first.marker if three_in_a_row?(current_squares)
+      return current_squares.first.marker if num_in_a_row?(current_squares, 3)
+    end
+    nil
+  end
+
+  def third_consecutive_key(marker)
+    WINNING_LINES.each do |line|
+      current_squares = @squares.values_at(*line)
+      next unless num_in_a_row?(current_squares, 2)
+
+      if has_marker?(current_squares, marker)
+        unmarked_square = current_squares.select(&:unmarked?).first
+        return @squares.key(unmarked_square)
+      end
     end
     nil
   end
 
   private
 
-  def three_in_a_row?(squares)
+  def num_in_a_row?(squares, num)
     markers = squares.reject(&:unmarked?).map(&:marker)
-    markers.size == 3 && markers.uniq.size == 1
+    markers.size == num && markers.uniq.size == 1
+  end
+
+  def has_marker?(squares, marker)
+    squares.map(&:marker).include?(marker)
   end
 end
 
