@@ -1,24 +1,31 @@
+require 'pry'
+
 class TTTGame
   WINNING_SCORE = 3
 
-  attr_reader :board, :human, :computer, :current_player, :final_winner
+  attr_reader :board, :human, :computer, :current_player
 
   def initialize
     @board = Board.new
-    @human = Human.new
-    @computer = Computer.new
-    @current_player = first_player
   end
 
   def play
     display_welcome_message
+    setup
     set_of_games
     display_goodbye_message
   end
 
   private
 
+  def setup
+    @human = Human.new
+    @computer = Computer.new
+    @current_player = first_player
+  end
+
   def set_of_games
+    display_ready_message
     loop do
       main_game
       display_final_winner
@@ -53,8 +60,11 @@ class TTTGame
   def display_welcome_message
     clear_screen
     puts "Welcome to Tic Tac Toe!"
-    puts "The first to #{WINNING_SCORE} wins takes the match!"
     puts
+  end
+
+  def display_ready_message
+    puts "The first to #{WINNING_SCORE} wins takes the match!"
   end
 
   def display_goodbye_message
@@ -325,13 +335,22 @@ class Square
 end
 
 class Player
-  HUMAN_MARKER = 'X'
-  COMPUTER_MARKER = 'O'
+  # HUMAN_MARKER = 'X'
+  # COMPUTER_MARKER = 'O'
+
+  POSSIBLE_MARKERS = %w(X O ! * # +)
+  @@markers_in_use = []
 
   attr_reader :marker, :score
 
+  def self.available_markers
+    POSSIBLE - @@markers_in_use
+  end
+
   def initialize
     @score = 0
+    @marker = Player.available_markers.first
+    @@markers_in_use << @marker
   end
 
   def add_point
@@ -346,14 +365,14 @@ end
 class Human < Player
   def initialize
     super
-    @marker = HUMAN_MARKER
+    @marker = Marker.user_select
   end
 end
 
 class Computer < Player
   def initialize
     super
-    @marker = COMPUTER_MARKER
+    @marker = Marker.new
   end
 end
 
