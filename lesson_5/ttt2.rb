@@ -8,7 +8,7 @@ module Displayable
   def choose_from_numbered_options(list)
     choice = nil
     loop do
-      list.each_with_index { |item, idx| puts "  #{idx+1}) #{item}" }
+      list.each_with_index { |item, idx| puts "  #{idx + 1}) #{item}" }
       choice = gets.chomp.to_i - 1
       break if (0...list.length).include?(choice)
       puts "That wasn't one of the options!"
@@ -90,20 +90,15 @@ class TTTGame
     change_current_player
   end
 
+  # rubocop:disable Metrics/AbcSize
   def computer_move
-    choice ||= board.one_space_left(computer.marker) if computer.offense?
+    choice = board.one_space_left(computer.marker) if computer.offense?
     choice ||= board.one_space_left(human.marker) if computer.defense?
     choice ||= board.good_square if computer.smart?
 
     choice || board.unmarked_keys.sample
   end
-
-  def choose_first_player_mode
-    display_list = FIRST_PLAYER_OPTIONS.map { |option| option.to_s.capitalize }
-    puts "Who gets to move first each game?"
-    choice = choose_from_numbered_options(display_list)
-    @first_player_mode = FIRST_PLAYER_OPTIONS[choice]
-  end
+  # rubocop:enable Metrics/AbcSize
 
   def first_player
     @first_player = case @first_player_mode
@@ -158,6 +153,13 @@ class TTTGame
     clear_screen
     puts "Welcome to Tic Tac Toe!"
     puts
+  end
+
+  def choose_first_player_mode
+    display_list = FIRST_PLAYER_OPTIONS.map { |option| option.to_s.capitalize }
+    puts "Who gets to move first each game?"
+    choice = choose_from_numbered_options(display_list)
+    @first_player_mode = FIRST_PLAYER_OPTIONS[choice]
   end
 
   def display_ready_message
@@ -322,7 +324,7 @@ class Board
   def winning_marker # returns winning marker or nil
     WINNING_LINES.each do |line|
       current_squares = @squares.values_at(*line)
-      return current_squares.first.marker if num_in_a_row?(current_squares, 3)
+      return current_squares.first.marker if three_in_a_row?(current_squares)
     end
     nil
   end
@@ -330,21 +332,29 @@ class Board
   def one_space_left(marker)
     WINNING_LINES.each do |line|
       current_squares = @squares.values_at(*line)
-      next unless num_in_a_row?(current_squares, 2)
 
-      if includes_marker?(current_squares, marker)
-        remaining_square = current_squares.select(&:unmarked?).first
-        return @squares.key(remaining_square)
+      if includes_marker?(current_squares, marker) &&
+         two_in_a_row?(current_squares)
+        empty_square = current_squares.select(&:unmarked?).first
+        return @squares.key(empty_square)
       end
     end
     nil
   end
 
-  def good_square
+  def good_square # could make more exciting
     MIDDLE if unmarked_keys.include?(MIDDLE)
   end
 
   private
+
+  def three_in_a_row?(squares)
+    num_in_a_row?(squares, 3)
+  end
+
+  def two_in_a_row?(squares)
+    num_in_a_row?(squares, 2)
+  end
 
   def num_in_a_row?(squares, num)
     markers = squares.reject(&:unmarked?).map(&:marker)
@@ -396,7 +406,7 @@ class Player
   def initialize
     @@list << self
     @score = 0
-    @name = get_name
+    @name = choose_name
     @marker = choose_marker
   end
 
@@ -427,7 +437,7 @@ class Human < Player
 
   private
 
-  def get_name
+  def choose_name
     input = nil
     loop do
       puts "What's your name?"
@@ -442,7 +452,7 @@ class Human < Player
     choice = nil
     loop do
       puts "Choose your tic-tac-toe marker: " +
-        Player.available_markers.join(' ')
+           Player.available_markers.join(' ')
       choice = gets.chomp.upcase
       break if Player.available_markers.include?(choice)
       puts "You can't use that as a marker, sorry."
@@ -466,7 +476,7 @@ class Computer < Player
     @playstyle = COMPUTER_TYPES[@name]
   end
 
-  def get_name
+  def choose_name
     COMPUTER_TYPES.keys.sample
   end
 
