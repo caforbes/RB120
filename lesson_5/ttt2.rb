@@ -4,12 +4,24 @@ module Displayable
     else list.join(', ')
     end
   end
+
+  def choose_from_numbered_options(list)
+    choice = nil
+    loop do
+      list.each_with_index { |item, idx| puts "  #{idx+1}) #{item}" }
+      choice = gets.chomp.to_i - 1
+      break if (0...list.length).include?(choice)
+      puts "That wasn't one of the options!"
+    end
+    choice
+  end
 end
 
 class TTTGame
   include Displayable
 
   WINNING_SCORE = 3
+  FIRST_PLAYER_OPTIONS = [:you, :computer, :alternate, :loser]
 
   attr_reader :board, :human, :computer, :current_player, :scoreboard
 
@@ -32,7 +44,7 @@ class TTTGame
   def setup
     @human = Human.new
     @computer = Computer.new
-    # @first_player_mode = choose_first_player_mode
+    choose_first_player_mode
     @current_player = first_player
   end
 
@@ -86,8 +98,20 @@ class TTTGame
     choice || board.unmarked_keys.sample
   end
 
-  def change_current_player
-    @current_player = alternate(current_player)
+  def choose_first_player_mode
+    display_list = FIRST_PLAYER_OPTIONS.map { |option| option.to_s.capitalize }
+    puts "Who gets to move first each game?"
+    choice = choose_from_numbered_options(display_list)
+    @first_player_mode = FIRST_PLAYER_OPTIONS[choice]
+  end
+
+  def first_player
+    @first_player = case @first_player_mode
+                    when :you then human
+                    when :computer then computer
+                    when :alternate then alternate(@first_player) || human
+                    when :loser then current_player || human
+                    end
   end
 
   def alternate(player)
@@ -97,12 +121,12 @@ class TTTGame
     end
   end
 
-  def humans_turn?
-    current_player == human
+  def change_current_player
+    @current_player = alternate(current_player)
   end
 
-  def first_player
-    human
+  def humans_turn?
+    current_player == human
   end
 
   def update_scores
@@ -351,7 +375,7 @@ class Square
 end
 
 class Player
-  DEFAULT_MARKERS = %w(X O ! - # + /)
+  DEFAULT_MARKERS = %w(O X ! - # + /)
 
   @@list = []
 
@@ -377,7 +401,7 @@ class Player
   end
 
   def to_s
-    name
+    @name
   end
 
   private
@@ -441,8 +465,6 @@ class Computer < Player
     super
     @playstyle = COMPUTER_TYPES[@name]
   end
-
-  private
 
   def get_name
     COMPUTER_TYPES.keys.sample
