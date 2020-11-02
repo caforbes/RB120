@@ -9,7 +9,7 @@ end
 class TTTGame
   include Displayable
 
-  WINNING_SCORE = 2
+  WINNING_SCORE = 3
 
   attr_reader :board, :human, :computer, :current_player, :scoreboard
 
@@ -18,6 +18,7 @@ class TTTGame
     @scoreboard = Scoreboard.new(WINNING_SCORE)
   end
 
+  # game orchestration and setup
   def play
     display_welcome_message
     setup
@@ -31,6 +32,7 @@ class TTTGame
   def setup
     @human = Human.new
     @computer = Computer.new
+    # @first_player_mode = choose_first_player_mode
     @current_player = first_player
   end
 
@@ -65,49 +67,10 @@ class TTTGame
     end
   end
 
-  def display_welcome_message
-    clear_screen
-    puts "Welcome to Tic Tac Toe!"
-    puts
-  end
-
-  def display_ready_message
-    puts ""
-    puts "Hi, #{human}! You have chosen the marker #{human.marker}."
-    puts "Today you will be playing #{computer}."
-    puts ""
-    puts "The first to #{WINNING_SCORE} wins takes the match!"
-    sleep 2
-    puts "Ready, set, go!"
-    sleep 1
-    clear_screen
-  end
-
-  def display_goodbye_message
-    puts
-    puts "Thanks for playing Tic Tac Toe! Goodbye!"
-  end
-
-  def clear_screen
-    system('clear') || system('cls')
-  end
-
-  def display_board
-    scoreboard.draw
-    puts "You are #{human.marker}. #{computer} is #{computer.marker}."
-    puts
-    board.draw
-    puts
-  end
-
-  def clear_screen_and_display_board
-    clear_screen
-    display_board
-  end
-
+  # gameplay details
   def current_player_moves
     chosen_square = case current_player
-                    when human then human_move
+                    when human then human.move(board.unmarked_keys)
                     when computer then computer_move
                     end
     board[chosen_square] = current_player.marker
@@ -115,23 +78,12 @@ class TTTGame
     change_current_player
   end
 
-  def human_move
-    puts "Choose an empty square (#{orjoined(board.unmarked_keys)}): "
-    square = nil
-    loop do
-      square = gets.chomp.to_i
-      break if board.unmarked_keys.include?(square)
-      puts "Sorry, that's not a valid choice."
-    end
-    square
-  end
-
   def computer_move
-    choice ||= board.third_consecutive_key(computer.marker) if computer.offense?
-    choice ||= board.third_consecutive_key(human.marker) if computer.defense?
+    choice ||= board.one_space_left(computer.marker) if computer.offense?
+    choice ||= board.one_space_left(human.marker) if computer.defense?
     choice ||= board.good_square if computer.smart?
 
-    choice ? choice : board.unmarked_keys.sample
+    choice || board.unmarked_keys.sample
   end
 
   def change_current_player
@@ -164,6 +116,56 @@ class TTTGame
     scoreboard.winner
   end
 
+  def reset
+    board.reset
+    @current_player = first_player
+  end
+
+  def reset_scores
+    scoreboard.reset
+  end
+
+  # messages and display
+  def clear_screen
+    system('clear') || system('cls')
+  end
+
+  def display_welcome_message
+    clear_screen
+    puts "Welcome to Tic Tac Toe!"
+    puts
+  end
+
+  def display_ready_message
+    puts ""
+    puts "Hi, #{human}! You have chosen the marker #{human.marker}."
+    puts "Today you will be playing #{computer}."
+    puts ""
+    puts "The first to #{WINNING_SCORE} wins takes the match!"
+    sleep 3
+    puts "Ready, set, go!"
+    sleep 1
+    clear_screen
+  end
+
+  def display_goodbye_message
+    puts
+    puts "Thanks for playing Tic Tac Toe! Goodbye!"
+  end
+
+  def display_board
+    scoreboard.draw
+    puts "You are #{human.marker}. #{computer} is #{computer.marker}."
+    puts
+    board.draw
+    puts
+  end
+
+  def clear_screen_and_display_board
+    clear_screen
+    display_board
+  end
+
   def display_result
     clear_screen_and_display_board
     case board.winning_marker
@@ -177,7 +179,7 @@ class TTTGame
   end
 
   def display_final_winner
-    puts ""
+    puts "\n************************************"
     case final_winner
     when human
       puts "#{human}, you won this Best-of-#{WINNING_SCORE} match!!!!"
@@ -186,7 +188,7 @@ class TTTGame
     else
       puts "There was no winner in this Best-of-#{WINNING_SCORE} match."
     end
-    puts ""
+    puts "************************************\n"
   end
 
   def quit?
@@ -216,14 +218,31 @@ class TTTGame
     puts "Let's play again to #{WINNING_SCORE} points!"
     puts
   end
+end
 
-  def reset
-    board.reset
-    @current_player = first_player
+class Scoreboard
+  def initialize(points_to_win)
+    @max_points = points_to_win
+    reset
   end
 
-  def reset_scores
-    scoreboard.reset
+  def reset
+    @scores = Hash.new(0)
+  end
+
+  def draw
+    tally = @scores.map { |(name, pts)| "#{name} (#{pts})" }.join(' | ')
+    puts "-------------------"
+    puts "Scores: #{tally}"
+    puts "-------------------"
+  end
+
+  def add(player)
+    @scores[player] += 1
+  end
+
+  def winner
+    @scores.key(@max_points)
   end
 end
 
@@ -284,12 +303,12 @@ class Board
     nil
   end
 
-  def third_consecutive_key(marker)
+  def one_space_left(marker)
     WINNING_LINES.each do |line|
       current_squares = @squares.values_at(*line)
       next unless num_in_a_row?(current_squares, 2)
 
-      if has_this_marker?(current_squares, marker)
+      if includes_marker?(current_squares, marker)
         remaining_square = current_squares.select(&:unmarked?).first
         return @squares.key(remaining_square)
       end
@@ -308,7 +327,7 @@ class Board
     markers.size == num && markers.uniq.size == 1
   end
 
-  def has_this_marker?(squares, marker)
+  def includes_marker?(squares, marker)
     squares.map(&:marker).include?(marker)
   end
 end
@@ -336,11 +355,19 @@ class Player
 
   @@list = []
 
-  attr_reader :marker, :score, :name
+  def self.list
+    @@list
+  end
 
   def self.available_markers
     DEFAULT_MARKERS - taken_markers
   end
+
+  def self.taken_markers
+    Player.list.map(&:marker)
+  end
+
+  attr_reader :marker
 
   def initialize
     @@list << self
@@ -353,30 +380,27 @@ class Player
     name
   end
 
-  def add_point
-    @score += 1
-  end
-
-  def reset_score
-    @score = 0
-  end
-
   private
 
   def choose_marker
     Player.available_markers.first
   end
-
-  def self.list
-    @@list
-  end
-
-  def self.taken_markers
-    Player.list.map(&:marker)
-  end
 end
 
 class Human < Player
+  include Displayable
+
+  def move(options)
+    puts "Choose an empty square (#{orjoined(options)}): "
+    square = nil
+    loop do
+      square = gets.chomp.to_i
+      break if options.include?(square)
+      puts "Sorry, that's not a valid choice."
+    end
+    square
+  end
+
   private
 
   def get_name
@@ -384,7 +408,7 @@ class Human < Player
     loop do
       puts "What's your name?"
       input = gets.chomp
-      break unless input.empty?
+      break unless input =~ /^\s*$/
       puts "I can't call you that!"
     end
     input
@@ -415,8 +439,10 @@ class Computer < Player
 
   def initialize
     super
-    @playstyle = COMPUTER_TYPES[name]
+    @playstyle = COMPUTER_TYPES[@name]
   end
+
+  private
 
   def get_name
     COMPUTER_TYPES.keys.sample
@@ -432,32 +458,6 @@ class Computer < Player
 
   def smart?
     @playstyle.include?('smart')
-  end
-end
-
-class Scoreboard
-  def initialize(points_to_win)
-    @max_points = points_to_win
-    reset
-  end
-
-  def reset
-    @scores = Hash.new(0)
-  end
-
-  def draw
-    tally = @scores.map { |(name, pts)| "#{name} (#{pts})" }.join(' | ')
-    puts "-------------------"
-    puts "Scores: #{tally}"
-    puts "-------------------"
-  end
-
-  def add(player)
-    @scores[player] += 1
-  end
-
-  def winner
-    @scores.key(@max_points)
   end
 end
 
