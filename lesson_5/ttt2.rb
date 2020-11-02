@@ -1,5 +1,3 @@
-require 'pry'
-
 module Displayable
   def orjoined(list)
     if list.size > 1 then "#{list[0..-2].join(', ')}, or #{list.last}"
@@ -9,14 +7,15 @@ module Displayable
 end
 
 class TTTGame
-  WINNING_SCORE = 3
-
   include Displayable
 
-  attr_reader :board, :human, :computer, :current_player
+  WINNING_SCORE = 2
+
+  attr_reader :board, :human, :computer, :current_player, :scoreboard
 
   def initialize
     @board = Board.new
+    @scoreboard = Scoreboard.new(WINNING_SCORE)
   end
 
   def play
@@ -48,7 +47,6 @@ class TTTGame
 
   def main_game
     loop do
-      display_leader_message
       display_board
       players_move
       update_scores
@@ -79,6 +77,10 @@ class TTTGame
     puts "Today you will be playing #{computer}."
     puts ""
     puts "The first to #{WINNING_SCORE} wins takes the match!"
+    sleep 2
+    puts "Ready, set, go!"
+    sleep 1
+    clear_screen
   end
 
   def display_goodbye_message
@@ -91,6 +93,7 @@ class TTTGame
   end
 
   def display_board
+    scoreboard.draw
     puts "You are #{human.marker}. #{computer} is #{computer.marker}."
     puts
     board.draw
@@ -132,10 +135,14 @@ class TTTGame
   end
 
   def change_current_player
-    @current_player = case current_player
-                      when human then computer
-                      when computer then human
-                      end
+    @current_player = alternate(current_player)
+  end
+
+  def alternate(player)
+    case player
+    when human then computer
+    when computer then human
+    end
   end
 
   def humans_turn?
@@ -148,29 +155,13 @@ class TTTGame
 
   def update_scores
     case board.winning_marker
-    when human.marker then human.add_point
-    when computer.marker then computer.add_point
+    when human.marker then scoreboard.add(human)
+    when computer.marker then scoreboard.add(computer)
     end
   end
 
   def final_winner
-    if human.score == WINNING_SCORE then human
-    elsif computer.score == WINNING_SCORE then computer
-    end
-  end
-
-  def display_scores
-    puts "-------------------"
-    puts "Scores: #{human} (#{human.score}) | #{computer} (#{computer.score})"
-    puts "-------------------"
-  end
-
-  def display_leader_message
-    if human.score < computer.score
-      puts "The computer is in the lead!"
-    elsif computer.score < human.score
-      puts "You are in the lead!"
-    end
+    scoreboard.winner
   end
 
   def display_result
@@ -183,7 +174,6 @@ class TTTGame
     else
       puts "It's a tie!"
     end
-    display_scores
   end
 
   def display_final_winner
@@ -233,8 +223,7 @@ class TTTGame
   end
 
   def reset_scores
-    human.reset_score
-    computer.reset_score
+    scoreboard.reset
   end
 end
 
@@ -443,6 +432,32 @@ class Computer < Player
 
   def smart?
     @playstyle.include?('smart')
+  end
+end
+
+class Scoreboard
+  def initialize(points_to_win)
+    @max_points = points_to_win
+    reset
+  end
+
+  def reset
+    @scores = Hash.new(0)
+  end
+
+  def draw
+    tally = @scores.map { |(name, pts)| "#{name} (#{pts})" }.join(' | ')
+    puts "-------------------"
+    puts "Scores: #{tally}"
+    puts "-------------------"
+  end
+
+  def add(player)
+    @scores[player] += 1
+  end
+
+  def winner
+    @scores.key(@max_points)
   end
 end
 
