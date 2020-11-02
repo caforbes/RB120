@@ -1,7 +1,17 @@
 require 'pry'
 
+module Displayable
+  def orjoined(list)
+    if list.size > 1 then "#{list[0..-2].join(', ')}, or #{list.last}"
+    else list.join(', ')
+    end
+  end
+end
+
 class TTTGame
   WINNING_SCORE = 3
+
+  include Displayable
 
   attr_reader :board, :human, :computer, :current_player
 
@@ -12,6 +22,7 @@ class TTTGame
   def play
     display_welcome_message
     setup
+    display_ready_message
     set_of_games
     display_goodbye_message
   end
@@ -25,7 +36,6 @@ class TTTGame
   end
 
   def set_of_games
-    display_ready_message
     loop do
       main_game
       display_final_winner
@@ -64,6 +74,10 @@ class TTTGame
   end
 
   def display_ready_message
+    puts ""
+    puts "Hi, #{human}! You have chosen the marker #{human.marker}."
+    puts "Today you will be playing #{computer}."
+    puts ""
     puts "The first to #{WINNING_SCORE} wins takes the match!"
   end
 
@@ -77,7 +91,7 @@ class TTTGame
   end
 
   def display_board
-    puts "You are #{human.marker}. Computer is #{computer.marker}."
+    puts "You are #{human.marker}. #{computer} is #{computer.marker}."
     puts
     board.draw
     puts
@@ -86,14 +100,6 @@ class TTTGame
   def clear_screen_and_display_board
     clear_screen
     display_board
-  end
-
-  def string_of_keys
-    keys = board.unmarked_keys
-
-    if keys.size < 2 then keys.join(', ')
-    else "#{keys[0..-2].join(', ')}, or #{keys.last}"
-    end
   end
 
   def current_player_moves
@@ -107,7 +113,7 @@ class TTTGame
   end
 
   def human_move
-    puts "Choose an empty square (#{string_of_keys}): "
+    puts "Choose an empty square (#{orjoined(board.unmarked_keys)}): "
     square = nil
     loop do
       square = gets.chomp.to_i
@@ -118,12 +124,11 @@ class TTTGame
   end
 
   def computer_move
-    best_choice ||= board.third_consecutive_key(computer.marker) # offense
-    best_choice ||= board.third_consecutive_key(human.marker) # defense
-    best_choice ||= Board::MIDDLE if board.unmarked_keys.include?(Board::MIDDLE)
+    choice ||= board.third_consecutive_key(computer.marker) if computer.offense?
+    choice ||= board.third_consecutive_key(human.marker) if computer.defense?
+    choice ||= board.good_square if computer.smart?
 
-    return best_choice if best_choice
-    board.unmarked_keys.sample
+    choice ? choice : board.unmarked_keys.sample
   end
 
   def change_current_player
@@ -156,7 +161,7 @@ class TTTGame
 
   def display_scores
     puts "-------------------"
-    puts "Scores: You (#{human.score}) | Computer (#{computer.score})"
+    puts "Scores: #{human} (#{human.score}) | #{computer} (#{computer.score})"
     puts "-------------------"
   end
 
@@ -172,9 +177,9 @@ class TTTGame
     clear_screen_and_display_board
     case board.winning_marker
     when human.marker
-      puts "You won!"
+      puts "You won, #{human}!"
     when computer.marker
-      puts "Computer won!"
+      puts "#{computer} won!"
     else
       puts "It's a tie!"
     end
@@ -185,9 +190,9 @@ class TTTGame
     puts ""
     case final_winner
     when human
-      puts "You won this Best-of-#{WINNING_SCORE} match!!!!"
+      puts "#{human}, you won this Best-of-#{WINNING_SCORE} match!!!!"
     when computer
-      puts "The computer won this time!!!!"
+      puts "#{computer} is the winner of this Best-of-#{WINNING_SCORE} match!!!"
     else
       puts "There was no winner in this Best-of-#{WINNING_SCORE} match."
     end
@@ -237,7 +242,6 @@ class Board
   WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
                   [[1, 4, 7], [2, 5, 8], [3, 6, 9]] + # cols
                   [[1, 5, 9], [3, 5, 7]] # diags
-
   MIDDLE = 5
 
   def initialize
@@ -296,12 +300,16 @@ class Board
       current_squares = @squares.values_at(*line)
       next unless num_in_a_row?(current_squares, 2)
 
-      if has_marker?(current_squares, marker)
-        unmarked_square = current_squares.select(&:unmarked?).first
-        return @squares.key(unmarked_square)
+      if has_this_marker?(current_squares, marker)
+        remaining_square = current_squares.select(&:unmarked?).first
+        return @squares.key(remaining_square)
       end
     end
     nil
+  end
+
+  def good_square
+    MIDDLE if unmarked_keys.include?(MIDDLE)
   end
 
   private
@@ -311,7 +319,7 @@ class Board
     markers.size == num && markers.uniq.size == 1
   end
 
-  def has_marker?(squares, marker)
+  def has_this_marker?(squares, marker)
     squares.map(&:marker).include?(marker)
   end
 end
@@ -335,22 +343,25 @@ class Square
 end
 
 class Player
-  # HUMAN_MARKER = 'X'
-  # COMPUTER_MARKER = 'O'
+  DEFAULT_MARKERS = %w(X O ! - # + /)
 
-  POSSIBLE_MARKERS = %w(X O ! * # +)
-  @@markers_in_use = []
+  @@list = []
 
-  attr_reader :marker, :score
+  attr_reader :marker, :score, :name
 
   def self.available_markers
-    POSSIBLE - @@markers_in_use
+    DEFAULT_MARKERS - taken_markers
   end
 
   def initialize
+    @@list << self
     @score = 0
-    @marker = Player.available_markers.first
-    @@markers_in_use << @marker
+    @name = get_name
+    @marker = choose_marker
+  end
+
+  def to_s
+    name
   end
 
   def add_point
@@ -360,19 +371,78 @@ class Player
   def reset_score
     @score = 0
   end
+
+  private
+
+  def choose_marker
+    Player.available_markers.first
+  end
+
+  def self.list
+    @@list
+  end
+
+  def self.taken_markers
+    Player.list.map(&:marker)
+  end
 end
 
 class Human < Player
-  def initialize
-    super
-    @marker = Marker.user_select
+  private
+
+  def get_name
+    input = nil
+    loop do
+      puts "What's your name?"
+      input = gets.chomp
+      break unless input.empty?
+      puts "I can't call you that!"
+    end
+    input
+  end
+
+  def choose_marker
+    choice = nil
+    loop do
+      puts "Choose your tic-tac-toe marker: " +
+        Player.available_markers.join(' ')
+      choice = gets.chomp.upcase
+      break if Player.available_markers.include?(choice)
+      puts "You can't use that as a marker, sorry."
+    end
+    choice
   end
 end
 
 class Computer < Player
+  COMPUTER_TYPES = {
+    'Randombot' => [],
+    'Rob' => ['offense'],
+    'Bot' => ['defense'],
+    'R2D2' => ['offense', 'defense'],
+    'Baby Computer' => ['smart'],
+    'Super Computer' => ['offense', 'defense', 'smart']
+  }
+
   def initialize
     super
-    @marker = Marker.new
+    @playstyle = COMPUTER_TYPES[name]
+  end
+
+  def get_name
+    COMPUTER_TYPES.keys.sample
+  end
+
+  def defense?
+    @playstyle.include?('defense')
+  end
+
+  def offense?
+    @playstyle.include?('offense')
+  end
+
+  def smart?
+    @playstyle.include?('smart')
   end
 end
 
