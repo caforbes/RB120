@@ -8,6 +8,7 @@ module Hand
   end
 
   def busted?
+    total > 21
   end
 
   def total
@@ -21,7 +22,7 @@ module Hand
     puts "Total: #{total}"
   end
 
-  def show_one_card
+  def show_top_card
     first_card = hand.keys.first
     rest_size = hand.size - 1
     puts ""
@@ -44,21 +45,34 @@ class Participant
 
   def initialize
     @hand = {}
+    @stay = false
+  end
+
+  def stay!
+    @stay = true
+  end
+
+  def stay?
+    @stay
   end
 end
 
 class Player < Participant
   def initialize
-    # what would the "data" or "states" of a Player object entail?
-    # maybe cards? a name?
     super
     @name = 'Unnamed Player'
   end
 
-  def hit
-  end
-
-  def stay
+  def hit_or_stay
+    puts ""
+    choice = nil
+    loop do
+      puts "Would you like to (1) hit, or (2) stay?"
+      choice = gets.chomp.to_i
+      break if [1, 2].include?(choice)
+      puts "That's not a valid option!"
+    end
+    stay! if choice == 2
   end
 end
 
@@ -67,17 +81,10 @@ class Dealer < Participant
     super
     @name = 'Dealer'
   end
-
-  def hit
-  end
-
-  def stay
-  end
 end
 
 class Deck
   FACES = (2..10).to_a + %w(A J Q K)
-  # SUITS = %w(hearts spades clubs diamonds)
   SUITS = %w(♡ ♠ ♣ ♢)
 
   def initialize
@@ -88,12 +95,12 @@ class Deck
     @cards.shuffle!
   end
 
-  def deal(player, num_of_cards = 1)
+  def deal(player, num_of_cards)
     num_of_cards.times { player.new_card(@cards.shift) }
   end
 
-  def count # for testing
-    @cards.size
+  def hit(player)
+    deal(player, 1)
   end
 end
 
@@ -115,31 +122,40 @@ class Card
 end
 
 class Game
-  attr_reader :deck, :dealer, :human
+  attr_reader :deck, :dealer, :player
 
   def initialize
     @dealer = Dealer.new
-    @human = Player.new
+    @player = Player.new
   end
 
   def start
-    deal_cards
-    show_initial_cards
-    # player_turn
+    deal_initial_cards
+    show_cards
+    player_turn
     # dealer_turn
     # show_result
     # binding.pry
   end
 
-  def deal_cards
+  def deal_initial_cards
     @deck = Deck.new
-    deck.deal(human, 2)
+    deck.deal(player, 2)
     deck.deal(dealer, 2)
   end
 
-  def show_initial_cards
-    human.show_hand
-    dealer.show_one_card
+  def show_cards
+    dealer.show_top_card
+    player.show_hand
+  end
+
+  def player_turn
+    until player.busted?
+      player.hit_or_stay
+      break if player.stay?
+      deck.hit(player)
+      show_cards
+    end
   end
 end
 
