@@ -14,6 +14,22 @@ module Hand
     hand.values.sum
   end
 
+  def show_hand
+    puts ""
+    puts "#{name} has:"
+    hand.each { |card, score| puts "#{card} (#{score} points)".center(40) }
+    puts "Total: #{total}"
+  end
+
+  def show_one_card
+    first_card = hand.keys.first
+    rest_size = hand.size - 1
+    puts ""
+    puts "#{name} has:"
+    puts "#{first_card} (#{hand[first_card]} points)".center(40)
+    puts "...and #{rest_size} other card#{'s' if rest_size > 1}...".center(40)
+  end
+
   private
 
   def ace_value
@@ -24,16 +40,20 @@ end
 class Participant
   include Hand
 
+  attr_reader :name
+
   def initialize
     @hand = {}
   end
 end
 
 class Player < Participant
-  # def initialize
-  #   # what would the "data" or "states" of a Player object entail?
-  #   # maybe cards? a name?
-  # end
+  def initialize
+    # what would the "data" or "states" of a Player object entail?
+    # maybe cards? a name?
+    super
+    @name = 'Unnamed Player'
+  end
 
   def hit
   end
@@ -43,9 +63,10 @@ class Player < Participant
 end
 
 class Dealer < Participant
-  # def initialize
-  #   # seems like very similar to Player... do we even need this?
-  # end
+  def initialize
+    super
+    @name = 'Dealer'
+  end
 
   def hit
   end
@@ -82,6 +103,10 @@ class Card
     @suit = suit
   end
 
+  def to_s
+    "#{@face}#{@suit}"
+  end
+
   def value
     if %w(J Q K).include?(@face) then 10
     elsif (2..10).include?(@face) then @face
@@ -99,17 +124,22 @@ class Game
 
   def start
     deal_cards
-    # show_initial_cards
+    show_initial_cards
     # player_turn
     # dealer_turn
     # show_result
-    binding.pry
+    # binding.pry
   end
 
   def deal_cards
     @deck = Deck.new
     deck.deal(human, 2)
     deck.deal(dealer, 2)
+  end
+
+  def show_initial_cards
+    human.show_hand
+    dealer.show_one_card
   end
 end
 
