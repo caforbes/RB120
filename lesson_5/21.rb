@@ -81,6 +81,10 @@ class Dealer < Participant
     super
     @name = 'Dealer'
   end
+
+  def hit_or_stay
+    stay! if total > 17
+  end
 end
 
 class Deck
@@ -133,9 +137,9 @@ class Game
     deal_initial_cards
     show_cards
     player_turn
-    # dealer_turn
+    dealer_turn
     # show_result
-    # binding.pry
+    binding.pry
   end
 
   def deal_initial_cards
@@ -156,6 +160,17 @@ class Game
       deck.hit(player)
       show_cards
     end
+  end
+
+  def dealer_turn
+    return if player.busted?
+
+    until dealer.busted?
+      dealer.hit_or_stay
+      break if dealer.stay?
+      deck.hit(dealer)
+    end
+    # need to figure out display of dealer hand/move
   end
 end
 
