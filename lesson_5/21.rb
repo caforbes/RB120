@@ -24,11 +24,11 @@ module Hand
 
   def show_top_card
     first_card = hand.keys.first
-    rest_size = hand.size - 1
+    cards_left = hand.size - 1
     puts ""
     puts "#{name} has:"
     puts "#{first_card} (#{hand[first_card]} points)".center(40)
-    puts "...and #{rest_size} other card#{'s' if rest_size > 1}...".center(40)
+    puts "...and #{cards_left} other card#{'s' if cards_left > 1}...".center(40)
   end
 
   private
