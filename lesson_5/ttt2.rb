@@ -9,11 +9,16 @@ module Displayable
     choice = nil
     loop do
       list.each_with_index { |item, idx| puts "  #{idx + 1}) #{item}" }
-      choice = gets.chomp.to_i - 1
+      input = gets.chomp
+      choice = input.to_i - 1 if valid_integer?(input)
       break if (0...list.length).include?(choice)
       puts "That wasn't one of the options!"
     end
     choice
+  end
+
+  def valid_integer?(input)
+    input.to_i.to_s == input
   end
 end
 
@@ -428,11 +433,11 @@ class Human < Player
     puts "Choose an empty square (#{orjoined(options)}): "
     square = nil
     loop do
-      square = gets.chomp.to_i
-      break if options.include?(square)
+      square = gets.chomp
+      break if options.include?(square.to_i) && valid_integer?(square)
       puts "Sorry, that's not a valid choice."
     end
-    square
+    square.to_i
   end
 
   private
