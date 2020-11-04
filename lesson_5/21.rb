@@ -15,6 +15,18 @@ module Hand
     hand.values.sum
   end
 
+  def ==(other)
+    total == other.total
+  end
+
+  def <(other)
+    total < other.total
+  end
+
+  def >(other)
+    total > other.total
+  end
+
   def show_hand
     puts ""
     puts "#{name} has:"
@@ -29,6 +41,12 @@ module Hand
     puts "#{name} has:"
     puts "#{first_card} (#{hand[first_card]} points)".center(40)
     puts "...and #{cards_left} other card#{'s' if cards_left > 1}...".center(40)
+  end
+
+  def show_turn
+    drawn = hand.size - 2
+    puts "#{name} drew #{drawn} card#{'s' if drawn > 1}" +
+          " for #{total} points#{' and busted' if busted?}."
   end
 
   private
@@ -138,19 +156,13 @@ class Game
     show_cards
     player_turn
     dealer_turn
-    # show_result
-    binding.pry
+    show_result
   end
 
   def deal_initial_cards
     @deck = Deck.new
     deck.deal(player, 2)
     deck.deal(dealer, 2)
-  end
-
-  def show_cards
-    dealer.show_top_card
-    player.show_hand
   end
 
   def player_turn
@@ -171,6 +183,37 @@ class Game
       deck.hit(dealer)
     end
     # need to figure out display of dealer hand/move
+  end
+
+  def calculate_winner
+    if player.busted? then dealer
+    elsif dealer.busted? then player
+    elsif player > dealer then player
+    elsif player < dealer then dealer
+    end
+  end
+
+  def show_cards
+    dealer.show_top_card
+    player.show_hand
+  end
+
+  def show_result
+    puts ""
+    player.show_turn
+    dealer.show_turn unless player.busted?
+    player.show_hand
+    dealer.show_hand
+    puts ""
+    show_winner
+  end
+
+  def show_winner
+    case calculate_winner
+    when player then puts "You won this round!!"
+    when dealer then puts "The dealer won this round..."
+    else puts "It was a tie."
+    end
   end
 end
 
