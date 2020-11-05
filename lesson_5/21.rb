@@ -1,10 +1,61 @@
 require 'pry'
 
+class Card
+  def initialize(face, suit)
+    @face = face
+    @suit = suit
+  end
+
+  def to_s
+    "#{@face}#{@suit}"
+  end
+
+  def suit
+    case @suit
+    when 'H' then '♡'
+    when 'S' then '♠'
+    when 'C' then '♣'
+    when 'D' then '♢'
+    end
+  end
+
+  def value
+    if %w(J Q K).include?(@face) then 10
+    elsif (2..10).include?(@face) then @face
+    end
+  end
+
+  def self.ace_value(total)
+    total <= 10 ? 11 : 1
+  end
+end
+
+class Deck
+  FACES = (2..10).to_a + %w(A J Q K)
+  SUITS = %w(H S C D)
+
+  def initialize
+    @cards = []
+    FACES.each do |face|
+      SUITS.each { |suit| @cards << Card.new(face, suit) }
+    end
+    @cards.shuffle!
+  end
+
+  def deal(player, num_of_cards)
+    num_of_cards.times { player.new_card(@cards.shift) }
+  end
+
+  def hit(player)
+    deal(player, 1)
+  end
+end
+
 module Hand
   attr_reader :hand
 
   def new_card(card)
-    hand[card] = card.value || ace_value
+    hand[card] = card.value || Card.ace_value(total)
   end
 
   def busted?
@@ -45,14 +96,8 @@ module Hand
 
   def show_turn
     drawn = hand.size - 2
-    puts "#{name} drew #{drawn} card#{'s' if drawn > 1}" +
+    puts "#{name} drew #{drawn} card#{'s' unless drawn == 1}" +
           " for #{total} points#{' and busted' if busted?}."
-  end
-
-  private
-
-  def ace_value
-    total <= 10 ? 11 : 1
   end
 end
 
@@ -62,6 +107,10 @@ class Participant
   attr_reader :name
 
   def initialize
+    reset
+  end
+
+  def reset
     @hand = {}
     @stay = false
   end
@@ -102,44 +151,6 @@ class Dealer < Participant
 
   def hit_or_stay
     stay! if total > 17
-  end
-end
-
-class Deck
-  FACES = (2..10).to_a + %w(A J Q K)
-  SUITS = %w(♡ ♠ ♣ ♢)
-
-  def initialize
-    @cards = []
-    FACES.each do |face|
-      SUITS.each { |suit| @cards << Card.new(face, suit) }
-    end
-    @cards.shuffle!
-  end
-
-  def deal(player, num_of_cards)
-    num_of_cards.times { player.new_card(@cards.shift) }
-  end
-
-  def hit(player)
-    deal(player, 1)
-  end
-end
-
-class Card
-  def initialize(face, suit)
-    @face = face
-    @suit = suit
-  end
-
-  def to_s
-    "#{@face}#{@suit}"
-  end
-
-  def value
-    if %w(J Q K).include?(@face) then 10
-    elsif (2..10).include?(@face) then @face
-    end
   end
 end
 
