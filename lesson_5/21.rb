@@ -100,6 +100,7 @@ class Participant
   attr_reader :name
 
   def initialize
+    set_name
     reset
   end
 
@@ -118,13 +119,18 @@ class Participant
 end
 
 class Player < Participant
-  def initialize
-    super
-    @name = 'Unnamed Player'
+  def set_name
+    input = nil
+    loop do
+      puts "What should I call you?"
+      input = gets.chomp
+      break unless input =~ /^\s*$/
+      puts "I can't call you that!"
+    end
+    @name = input
   end
 
   def hit_or_stay
-    puts ""
     choice = nil
     loop do
       puts "Would you like to (1) hit, or (2) stay?"
@@ -137,9 +143,8 @@ class Player < Participant
 end
 
 class Dealer < Participant
-  def initialize
-    super
-    @name = 'Dealer'
+  def set_name
+    @name = 'Dealerbot'
   end
 
   def hit_or_stay
@@ -156,18 +161,22 @@ class Game
   end
 
   def play
+    show_welcome
     start
+    show_goodbye
   end
 
   private
 
   def start
-    show_welcome
     deal_initial_cards
     show_cards
     player_turn
     dealer_turn
     show_result
+  end
+
+  def setup
   end
 
   def deal_initial_cards
@@ -196,7 +205,6 @@ class Game
       break if dealer.stay?
       dealer.new_card(deck.deal)
     end
-    # need to figure out display of dealer hand/move
   end
 
   def calculate_winner
