@@ -7,7 +7,7 @@ class Card
   end
 
   def to_s
-    "#{@face}#{@suit}"
+    "#{@face}#{suit}"
   end
 
   def suit
@@ -19,13 +19,14 @@ class Card
     end
   end
 
-  def value
+  def value(total)
     if %w(J Q K).include?(@face) then 10
     elsif (2..10).include?(@face) then @face
+    else ace_value(total)
     end
   end
 
-  def self.ace_value(total)
+  def ace_value(total)
     total <= 10 ? 11 : 1
   end
 end
@@ -42,12 +43,8 @@ class Deck
     @cards.shuffle!
   end
 
-  def deal(player, num_of_cards)
-    num_of_cards.times { player.new_card(@cards.shift) }
-  end
-
-  def hit(player)
-    deal(player, 1)
+  def deal
+    @cards.pop
   end
 end
 
@@ -55,7 +52,7 @@ module Hand
   attr_reader :hand
 
   def new_card(card)
-    hand[card] = card.value || Card.ace_value(total)
+    hand[card] = card.value(total)
   end
 
   def busted?
@@ -64,10 +61,6 @@ module Hand
 
   def total
     hand.values.sum
-  end
-
-  def ==(other)
-    total == other.total
   end
 
   def <(other)
@@ -79,19 +72,19 @@ module Hand
   end
 
   def show_hand
-    puts ""
     puts "#{name} has:"
     hand.each { |card, score| puts "#{card} (#{score} points)".center(40) }
     puts "Total: #{total}"
+    puts ""
   end
 
   def show_top_card
     first_card = hand.keys.first
     cards_left = hand.size - 1
-    puts ""
     puts "#{name} has:"
     puts "#{first_card} (#{hand[first_card]} points)".center(40)
     puts "...and #{cards_left} other card#{'s' if cards_left > 1}...".center(40)
+    puts ""
   end
 
   def show_turn
@@ -162,7 +155,14 @@ class Game
     @player = Player.new
   end
 
+  def play
+    start
+  end
+
+  private
+
   def start
+    show_welcome
     deal_initial_cards
     show_cards
     player_turn
@@ -172,15 +172,18 @@ class Game
 
   def deal_initial_cards
     @deck = Deck.new
-    deck.deal(player, 2)
-    deck.deal(dealer, 2)
+    2.times do
+      player.new_card(deck.deal)
+      dealer.new_card(deck.deal)
+    end
   end
 
   def player_turn
     until player.busted?
       player.hit_or_stay
       break if player.stay?
-      deck.hit(player)
+      player.new_card(deck.deal)
+      clear
       show_cards
     end
   end
@@ -191,7 +194,7 @@ class Game
     until dealer.busted?
       dealer.hit_or_stay
       break if dealer.stay?
-      deck.hit(dealer)
+      dealer.new_card(deck.deal)
     end
     # need to figure out display of dealer hand/move
   end
@@ -204,18 +207,25 @@ class Game
     end
   end
 
+  # display and messages
+  def show_welcome
+    clear
+    puts "Welcome to 21!"
+    puts ""
+  end
+
   def show_cards
     dealer.show_top_card
     player.show_hand
   end
 
   def show_result
-    puts ""
+    sleep 1
     player.show_turn
+    sleep 1
     dealer.show_turn unless player.busted?
-    player.show_hand
-    dealer.show_hand
     puts ""
+    sleep 1
     show_winner
   end
 
@@ -226,6 +236,10 @@ class Game
     else puts "It was a tie."
     end
   end
+
+  def clear
+    system 'clear' || 'cls'
+  end
 end
 
-Game.new.start
+Game.new.play
