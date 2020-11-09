@@ -1,5 +1,3 @@
-require 'pry'
-
 class Card
   def initialize(face, suit)
     @face = face
@@ -80,7 +78,7 @@ module Hand
 
   def show_turn
     drawn = hand.size - 2
-    puts "#{name} drew #{drawn} card#{'s' unless drawn == 1}" +
+    puts  "#{name} drew #{drawn} card#{'s' unless drawn == 1}" \
           " for #{total} points#{' and busted' if busted?}."
   end
 end
