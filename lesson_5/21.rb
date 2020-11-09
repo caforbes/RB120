@@ -78,15 +78,6 @@ module Hand
     puts ""
   end
 
-  def show_top_card
-    first_card = hand.keys.first
-    cards_left = hand.size - 1
-    puts "#{name} has:"
-    puts "#{first_card} (#{hand[first_card]} points)".center(40)
-    puts "...and #{cards_left} other card#{'s' if cards_left > 1}...".center(40)
-    puts ""
-  end
-
   def show_turn
     drawn = hand.size - 2
     puts "#{name} drew #{drawn} card#{'s' unless drawn == 1}" +
@@ -140,6 +131,10 @@ class Player < Participant
     end
     stay! if choice == 2
   end
+
+  def show_cards
+    show_hand
+  end
 end
 
 class Dealer < Participant
@@ -150,25 +145,41 @@ class Dealer < Participant
   def hit_or_stay
     stay! if total > 17
   end
+
+  def show_cards
+    first_card = hand.keys.first
+    cards_left = hand.size - 1
+    puts "#{name} has:"
+    puts "#{first_card} (#{hand[first_card]} points)".center(40)
+    puts "...and #{cards_left} other card#{'s' if cards_left > 1}...".center(40)
+    puts ""
+  end
 end
 
 class Game
   attr_reader :deck, :dealer, :player
 
-  def initialize
-    @dealer = Dealer.new
-    @player = Player.new
-  end
-
   def play
     show_welcome
-    start
+    setup
+    loop do
+      show_ready_message
+      play_one_hand
+      break unless play_again?
+    end
     show_goodbye
   end
 
   private
 
-  def start
+  def setup
+    @dealer = Dealer.new
+    @player = Player.new
+    @deck = Deck.new
+  end
+
+  def play_one_hand
+    clear
     deal_initial_cards
     show_cards
     player_turn
@@ -176,11 +187,7 @@ class Game
     show_result
   end
 
-  def setup
-  end
-
   def deal_initial_cards
-    @deck = Deck.new
     2.times do
       player.new_card(deck.deal)
       dealer.new_card(deck.deal)
@@ -218,13 +225,21 @@ class Game
   # display and messages
   def show_welcome
     clear
-    puts "Welcome to 21!"
+    puts "Welcome to Twenty-One!"
     puts ""
   end
 
+  def show_ready_message
+    puts ""
+    puts "Okay, let's deal!"
+    sleep 1
+    puts "..."
+    sleep 1
+  end
+
   def show_cards
-    dealer.show_top_card
-    player.show_hand
+    dealer.show_cards
+    player.show_cards
   end
 
   def show_result
@@ -238,11 +253,21 @@ class Game
   end
 
   def show_winner
+    puts "****************"
     case calculate_winner
     when player then puts "You won this round!!"
     when dealer then puts "The dealer won this round..."
     else puts "It was a tie."
     end
+    puts "****************"
+  end
+
+  def play_again?
+    false
+  end
+
+  def show_goodbye
+    puts "Thanks for playing Twenty-One!"
   end
 
   def clear
