@@ -166,6 +166,7 @@ class Game
       show_ready_message
       play_one_hand
       break unless play_again?
+      reset
     end
     show_goodbye
   end
@@ -176,6 +177,12 @@ class Game
     @dealer = Dealer.new
     @player = Player.new
     @deck = Deck.new
+  end
+
+  def reset
+    @deck = Deck.new
+    player.reset
+    dealer.reset
   end
 
   def play_one_hand
@@ -263,7 +270,14 @@ class Game
   end
 
   def play_again?
-    false
+    input = nil
+    loop do
+      puts "Do you want to play again? (y/n)"
+      input = gets.chomp
+      break if ['y', 'n'].include?(input)
+      puts "I didn't understand that answer!"
+    end
+    input == 'y'
   end
 
   def show_goodbye
