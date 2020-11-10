@@ -8,7 +8,7 @@ class BankAccount
   end
 
   def deposit(amount)
-    if amount > 0
+    if amount.positive?
       self.balance += amount
       "$#{amount} deposited. Total balance is $#{balance}."
     else
@@ -17,7 +17,7 @@ class BankAccount
   end
 
   def withdraw(amount)
-    if amount > 0 && valid_transaction?(balance - amount)
+    if amount.positive? && balance >= amount
       self.balance -= amount
       "$#{amount} withdrawn. Total balance is $#{balance}."
     else
@@ -28,10 +28,6 @@ class BankAccount
   private
 
   attr_writer :balance
-
-  def valid_transaction?(new_balance)
-    new_balance >= 0
-  end
 end
 
 # Example
