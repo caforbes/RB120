@@ -1,3 +1,13 @@
+module Validate
+  def has_characters?(input)
+    !!(input =~ /^\s*$/)
+  end
+
+  def valid_int?(input_string)
+    input_string.to_i.to_s == input_string
+  end
+end
+
 class Card
   def initialize(face, suit)
     @face = face
@@ -113,7 +123,7 @@ class Player < Participant
     loop do
       puts "What should I call you?"
       input = gets.chomp
-      break unless input =~ /^\s*$/
+      break unless has_characters?(input)
       puts "I can't call you that!"
     end
     @name = input
@@ -123,16 +133,21 @@ class Player < Participant
     choice = nil
     loop do
       puts "Would you like to (1) hit, or (2) stay?"
-      choice = gets.chomp.to_i
+      choice = gets.chomp
+      choice = choice.to_i if valid_int?(choice)
       break if [1, 2].include?(choice)
       puts "That's not a valid option!"
     end
-    stay! if choice == 2
+    stay! if choice. == 2
   end
 
   def show_cards
     show_hand
   end
+
+  private
+
+  include Validate
 end
 
 class Dealer < Participant
