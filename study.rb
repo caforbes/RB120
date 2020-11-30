@@ -1,16 +1,23 @@
-class Polygon
-  SIDES = '?'
+class Fish
+  attr_reader :length
 
-  attr_reader :num_sides
+  def initialize(length)
+    @length = length
+  end
 
-  def initialize
-    @num_sides = SIDES
+  def ==(other)
+    length == other.length
+  end
+
+  def swim
+    @@can_swim
   end
 end
 
-class Triangle < Polygon
-  SIDES = 3
-end
+a = Fish.new(20)
+b = Fish.new(20)
 
-triangle = Triangle.new
-puts triangle.num_sides
+# puts a == b   # => true
+puts a === b   # => true
+puts Integer === 4   # => true
+p a.swim
