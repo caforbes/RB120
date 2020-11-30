@@ -1,15 +1,16 @@
-module Mailable
-  attr_accessor :mailing_address
+class Polygon
+  SIDES = '?'
+
+  attr_reader :num_sides
+
+  def initialize
+    @num_sides = SIDES
+  end
 end
 
-class Building
+class Triangle < Polygon
+  SIDES = 3
 end
 
-class Library < Building
-  include Mailable
-end
-
-lib = Library.new
-p lib.class.ancestors
-
-p Module.ancestors
+triangle = Triangle.new
+puts triangle.num_sides
