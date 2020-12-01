@@ -1,8 +1,8 @@
 class GuessingGame
-  TOTAL_GUESSES = 7
-
-  LOW_NUM = 1
-  HIGH_NUM = 100
+  def initialize(minimum, maximum)
+    @min = minimum
+    @max = maximum
+  end
 
   def play
     setup
@@ -16,11 +16,12 @@ class GuessingGame
 
   private
 
-  attr_reader :guess, :number, :guesses_left
+  attr_reader :min, :max, :guess, :number, :guesses_left
 
   def setup
-    @guesses_left = TOTAL_GUESSES
-    @number = rand(LOW_NUM..HIGH_NUM)
+    @guesses_left = calculate_total_guesses
+    @number = rand(min..max)
+    @guess = nil
   end
 
   def user_turn
@@ -31,7 +32,7 @@ class GuessingGame
 
   def get_user_guess
     loop do
-      print "Enter a number between #{LOW_NUM} and #{HIGH_NUM}: "
+      print "Enter a number between #{min} and #{max}: "
       @guess = gets.chomp
       break if valid_guess?
       puts "That's not a valid guess!"
@@ -63,8 +64,13 @@ class GuessingGame
     end
   end
 
+  def calculate_total_guesses
+    size_of_range = (min..max).to_a.size
+    Math.log2(size_of_range).to_i + 1
+  end
+
   def valid_guess?
-    guess == guess.to_i.to_s && (LOW_NUM..HIGH_NUM).include?(guess.to_i)
+    guess == guess.to_i.to_s && (min..max).include?(guess.to_i)
   end
 
   def winning_guess?
@@ -76,5 +82,5 @@ class GuessingGame
   end
 end
 
-game = GuessingGame.new
+game = GuessingGame.new(1, 600)
 game.play
