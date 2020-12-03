@@ -36,8 +36,6 @@ class Card
     value <=> other.value
   end
 
-  protected
-
   def value
     case rank
     when Integer then rank
@@ -102,9 +100,9 @@ class PokerHand
   def straight?
     return false unless pair_count == [1, 1, 1, 1, 1]
 
-    low, high = @hand.min.rank, @hand.max.rank
+    low, high = @hand.min, @hand.max
 
-    Deck::RANKS.index(low) + 4 == Deck::RANKS.index(high)
+    low.value + 4 == high.value
   end
 
   def three_of_a_kind?

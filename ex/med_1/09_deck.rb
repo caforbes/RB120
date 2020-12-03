@@ -34,8 +34,6 @@ class Card
 
   def <=>(other)
     rank_value <=> other.rank_value
-  # rescue NoMethodError
-  #   super
   end
 
   protected
